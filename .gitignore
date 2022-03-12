@@ -27,7 +27,6 @@ target/
 .vscode
 node_modules/
 frontend/
-package-lock.json
 tsconfig.json
 types.d.ts
 webpack.generated.js
