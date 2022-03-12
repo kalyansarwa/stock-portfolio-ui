@@ -1,5 +1,8 @@
 package com.kalyansarwa.stockportfolio.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -13,14 +16,18 @@ public class StockItem {
     @GeneratedValue
     Long id;
 
-    String entryDate;
+    LocalDate entryDate;
     String symbol;
-    Double price;
+    BigDecimal price;
     Integer quantity;
-    Double totalPrice;
 
-    public StockItem calculate() {
-        this.totalPrice = this.price * this.quantity;
-        return this;
-    }
+    BigDecimal marketCap;
+    BigDecimal purchaseCost;
+    BigDecimal totalPrice;
+    BigDecimal currentMarketPrice;
+    BigDecimal percentageChange;
+
+    BigDecimal currentPrice;
+    BigDecimal gainOrLoss;
+
 }
