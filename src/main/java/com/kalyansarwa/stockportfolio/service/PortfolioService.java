@@ -43,9 +43,9 @@ public class PortfolioService {
 
             s.setCurrentMarketPrice(calculateMarketPrice(s.getSymbol()));
 
-            s.setPurchaseCost(calculatePurchaseCost(s.getPrice(), s.getQuantity(), true));
+            s.setPurchaseCost(roundMe(calculatePurchaseCost(s.getPrice(), s.getQuantity(), true)));
 
-            s.setTotalPrice(calculatePurchaseCost(s.getPrice(), s.getQuantity(), s.getPurchaseCost()));
+            s.setTotalPrice(calculateTotalCost(s.getPrice(), s.getQuantity(), s.getPurchaseCost()));
 
             s.setCurrentPrice(calculateCurrentPrice(s.getCurrentMarketPrice(), s.getQuantity(), s.getPrice()));
 
@@ -78,7 +78,7 @@ public class PortfolioService {
 
     }
 
-    private BigDecimal calculatePurchaseCost(BigDecimal price, Integer quantity, BigDecimal purchaseCost) {
+    private BigDecimal calculateTotalCost(BigDecimal price, Integer quantity, BigDecimal purchaseCost) {
         return roundMe((price.multiply(BigDecimal.valueOf(quantity))).add(purchaseCost));
     }
 
