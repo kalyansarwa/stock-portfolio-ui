@@ -107,6 +107,7 @@ public class ListView extends VerticalLayout {
         grid.setColumns(
                 "entryDate", 
                 "symbol", 
+                "marketCap",
                 "price",
                 "quantity",
                 "purchaseCost",

@@ -53,6 +53,8 @@ public class PortfolioService {
 
             s.setPercentageChange(calculatePercentageChange(s.getCurrentMarketPrice(), s.getPrice()));
 
+            s.setMarketCap(calculateMarketCap(s.getSymbol()));
+
         }
         return allStocks;
     }
@@ -84,6 +86,10 @@ public class PortfolioService {
 
     private BigDecimal calculateMarketPrice(String symbol) {
         return roundMe(yahooStockService.findStock(symbol + ".NS").getStock().getQuote().getPrice());
+    }
+
+    private BigDecimal calculateMarketCap(String symbol) {
+        return roundMe(yahooStockService.findStock(symbol + ".NS").getStock().getStats().getMarketCap().divide(new BigDecimal(10000000)));
     }
 
     private BigDecimal calculatePurchaseCost(BigDecimal price, Integer quantity, boolean buy) {
