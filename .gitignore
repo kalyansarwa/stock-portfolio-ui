@@ -26,7 +26,8 @@ target/
 .DS_Store
 .vscode
 node_modules/
-frontend/
+frontend/generated
+frontend/index.html
 tsconfig.json
 types.d.ts
 webpack.generated.js
