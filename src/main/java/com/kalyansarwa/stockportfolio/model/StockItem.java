@@ -10,8 +10,8 @@ import lombok.Data;
 @Entity
 public class StockItem {
     @Id
-	@GeneratedValue
-	Long id;
+    @GeneratedValue
+    Long id;
 
     String entryDate;
     String symbol;
