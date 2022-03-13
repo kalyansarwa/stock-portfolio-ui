@@ -7,6 +7,7 @@ import com.kalyansarwa.stockportfolio.service.PortfolioService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -15,7 +16,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 @PageTitle("Entries | Stock Portfolio")
-@Route(value = "", layout = MainLayout.class)
+@Route(value = "entries", layout = MainLayout.class)
 @PermitAll
 public class ListView extends VerticalLayout {
     Grid<StockItem> grid = new Grid<>(StockItem.class);
@@ -117,6 +118,19 @@ public class ListView extends VerticalLayout {
                 "currentPrice",
                 "gainOrLoss");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
+
+        grid.addThemeVariants(GridVariant.LUMO_COLUMN_BORDERS);
+        grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+
+        grid.setClassNameGenerator(stockItem -> {
+            if (stockItem.getPercentageChange().doubleValue() >= 0)
+                return "high-rating";
+            if (stockItem.getPercentageChange().doubleValue() < 0)
+                return "low-rating";
+            return null;
+        });
+
+        grid.appendFooterRow();
 
         grid.asSingleSelect().addValueChangeListener(e -> editStockItem(e.getValue()));
 

@@ -27,6 +27,7 @@ public class MainLayout extends AppLayout {
 
         Button logoutButton = new Button("Log Out", e -> service.logout());
         HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), logo, logoutButton);
+
         header.setDefaultVerticalComponentAlignment(Alignment.CENTER);
         header.expand(logo);
         header.setWidthFull();
@@ -37,12 +38,12 @@ public class MainLayout extends AppLayout {
     }
 
     private void createDrawer() {
-        RouterLink listView = new RouterLink("List", ListView.class);
+        RouterLink listView = new RouterLink("Stock Entries", ListView.class);
         listView.setHighlightCondition(HighlightConditions.sameLocation());
 
         addToDrawer(new VerticalLayout(
-            listView,
-            new RouterLink("Dashboard", DashboardView.class)
+            new RouterLink("Dashboard", DashboardView.class),
+            listView
         ));
     }
     

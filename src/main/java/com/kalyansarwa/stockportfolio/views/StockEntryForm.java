@@ -46,19 +46,6 @@ public class StockEntryForm extends FormLayout {
                 quantity,
                 createButtonLayout());
 
-        // saveButton.addClickListener(click -> {
-        // try {
-        // binder.writeBean(stockItem);
-        // service.save(stockItem);
-        // listStockEntries();
-        // binder.readBean(new StockItem());
-        // } catch (Exception e) {
-        // System.out.println("Error here " + e.getMessage());
-        // e.printStackTrace();
-        // }
-        // });
-
-        // addButton.addClickListener(click -> addStockItem());
     }
 
     public void setStockItem(StockItem stockItem) {
