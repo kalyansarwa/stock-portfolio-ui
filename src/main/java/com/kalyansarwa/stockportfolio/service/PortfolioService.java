@@ -3,20 +3,19 @@ package com.kalyansarwa.stockportfolio.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
-
-import com.kalyansarwa.stockportfolio.model.StockItem;
-import com.kalyansarwa.stockportfolio.repo.StockRepo;
+import com.kalyansarwa.stockportfolio.model.StockEntry;
+import com.kalyansarwa.stockportfolio.model.StockExit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class PortfolioService {
 
     private static final BigDecimal BROKERAGE_PERCENTAGE = new BigDecimal("0.0027");
@@ -26,35 +25,40 @@ public class PortfolioService {
     private static final BigDecimal GST_PERCENTAGE = new BigDecimal("0.18");
 
     @Autowired
-    private StockRepo stockRepo;
+    private StockEntryClientService stockEntryClientService;
+
+    @Autowired
+    private StockExitClientService stockExitClientService;
 
     @Autowired
     private YahooStockService yahooStockService;
 
-    public List<StockItem> findAll(String filterText) {
+    public List<StockExit> findAllStockExits() {
+        List<StockExit> allStocks = stockExitClientService.getstockExits();
+        return allStocks;
+    }
 
-        List<StockItem> allStocks;
-        if (filterText == null || filterText.isEmpty())
-            allStocks = stockRepo.findAll();
-        else
-            allStocks = stockRepo.search(filterText);
+    public List<StockEntry> findAllStockEntries(String filterText) {
 
-        for (StockItem s : allStocks) {
+        List<StockEntry> allStocks = stockEntryClientService.getStockEntries();
+        log.info("stock entries received : {}", allStocks);
+        // if (filterText == null || filterText.isEmpty())
+        // allStocks = stockRepo.findAll();
+        // else
+        // allStocks = stockRepo.search(filterText);
+
+        for (StockEntry s : allStocks) {
 
             s.setCurrentMarketPrice(calculateMarketPrice(s.getSymbol()));
 
-            s.setPurchaseCost(roundMe(calculatePurchaseCost(s.getPrice(), s.getQuantity(), true)));
+            // s.setPurchaseBrokerage(calculateBrokerage(s.getPurchasePricePerUnit(),
+            // s.getQuantity(), true));
 
-            s.setTotalPrice(calculateTotalCost(s.getPrice(), s.getQuantity(), s.getPurchaseCost()));
+            s.setCurrentPrice(calculateCurrentPrice(s.getCurrentMarketPrice(), s.getQuantity()));
 
-            s.setCurrentPrice(calculateCurrentPrice(s.getCurrentMarketPrice(), s.getQuantity(), s.getPrice()));
+            s.setGainOrLoss(calculateGainOrLoss(s.getCurrentPrice(), s.getTotalPurchasePrice()));
 
-            s.setGainOrLoss(calculateGainOrLoss(s.getCurrentPrice(), s.getTotalPrice()));
-
-            s.setPercentageChange(calculatePercentageChange(s.getCurrentMarketPrice(), s.getPrice()));
-
-            s.setMarketCap(calculateMarketCap(s.getSymbol()));
-
+            s.setPercentageChange(calculatePercentageChange(s.getCurrentMarketPrice(), s.getPurchasePricePerUnit()));
         }
         return allStocks;
     }
@@ -73,26 +77,32 @@ public class PortfolioService {
         return roundMe(currentPrice.subtract(totalPrice));
     }
 
-    private BigDecimal calculateCurrentPrice(BigDecimal currentMarketPrice, Integer quantity, BigDecimal price) {
+    private BigDecimal calculateCurrentPrice(BigDecimal currentMarketPrice, Integer quantity) {
 
         return roundMe((currentMarketPrice.multiply(BigDecimal.valueOf(quantity)))
-                .subtract(calculatePurchaseCost(price, quantity, false)));
+                .subtract(calculateBrokerage(currentMarketPrice, quantity, false)));
 
     }
 
-    private BigDecimal calculateTotalCost(BigDecimal price, Integer quantity, BigDecimal purchaseCost) {
-        return roundMe((price.multiply(BigDecimal.valueOf(quantity))).add(purchaseCost));
+    private BigDecimal calculateTotalPurchaseCost(BigDecimal price, Integer quantity, BigDecimal puchaseBrokerage) {
+        return roundMe((price.multiply(BigDecimal.valueOf(quantity))).add(puchaseBrokerage));
+    }
+
+    private BigDecimal calculateTotalSaleCost(BigDecimal price, Integer quantity, BigDecimal saleBrokerage) {
+        return roundMe((price.multiply(BigDecimal.valueOf(quantity))).subtract(saleBrokerage));
     }
 
     private BigDecimal calculateMarketPrice(String symbol) {
         return roundMe(yahooStockService.findStock(symbol + ".NS").getStock().getQuote().getPrice());
     }
 
-    private BigDecimal calculateMarketCap(String symbol) {
-        return roundMe(yahooStockService.findStock(symbol + ".NS").getStock().getStats().getMarketCap().divide(new BigDecimal(10000000)));
-    }
+    // private BigDecimal calculateMarketCap(String symbol) {
+    // return roundMe(yahooStockService.findStock(symbol +
+    // ".NS").getStock().getStats().getMarketCap().divide(new
+    // BigDecimal(10000000)));
+    // }
 
-    private BigDecimal calculatePurchaseCost(BigDecimal price, Integer quantity, boolean buy) {
+    private BigDecimal calculateBrokerage(BigDecimal price, Integer quantity, boolean buy) {
 
         BigDecimal totalPrice = price.multiply(BigDecimal.valueOf(quantity));
         BigDecimal brokerage = totalPrice.multiply(BROKERAGE_PERCENTAGE);
@@ -106,48 +116,63 @@ public class PortfolioService {
 
     }
 
-    public void save(StockItem s) {
+    public void save(StockEntry s) {
         if (s == null) {
             System.err.println("StockItem is null");
         }
-        stockRepo.save(s);
+        s.setPortfolioId("skalyan");
+        s.setPurchaseBrokerage(calculateBrokerage(s.getPurchasePricePerUnit(), s.getQuantity(), true));
+        s.setTotalPurchasePrice(
+                calculateTotalPurchaseCost(s.getPurchasePricePerUnit(), s.getQuantity(), s.getPurchaseBrokerage()));
+        s.setHolding(true);
+        stockEntryClientService.saveStockEntry(s);
+
     }
 
-    public long countStocks() {
-        return stockRepo.count();
+    public int countStocks() {
+        return stockEntryClientService.getStockEntriesCount().intValue();
     }
 
-    public void deleteEntry(StockItem s) {
-        stockRepo.delete(s);
+    public void deleteEntry(StockEntry s) {
+        stockEntryClientService.deleteStockEntry(s);
     }
 
-    @PostConstruct
-    public void initialize() {
-        stockRepo.saveAll(
-                Stream.of("01-Mar-2021:ABB:1546.94:9",
-                        "30-Apr-2021:JSLHISAR:164.50:100",
-                        "13-Aug-2021:VIPIND:456.00:40",
-                        "20-Aug-2021:LINDEINDIA:1948.30:9",
-                        "27-Sep-2021:GNFC:421.50:42",
-                        "15-Nov-2021:THERMAX:1596.25:11",
-                        "15-Nov-2021:ATGL:1652.00:10",
-                        "29-Nov-2021:VEDL:353.00:50",
-                        "13-Dec-2021:ADANIENT:1757.40:10",
-                        "20-Dec-2021:POWERGRID:210.55:80",
-                        "24-Jan-2022:SHARDACROP:454.30:38",
-                        "31-Jan-2022:GAEL:214.95:80",
-                        "07-Feb-2022:BANKBARODA:109.05:160",
-                        "07-Feb-2022:CGCL:615.00:28",
-                        "07-Feb-2022:HINDALCO:530.05:33")
-                        .map(entry -> {
-                            String[] split = entry.split(":");
-                            StockItem stockEntry = new StockItem();
-                            stockEntry.setEntryDate(
-                                    LocalDate.parse(split[0], DateTimeFormatter.ofPattern("dd-MMM-yyyy")));
-                            stockEntry.setSymbol(split[1]);
-                            stockEntry.setQuantity(Integer.parseInt(split[3]));
-                            stockEntry.setPrice(new BigDecimal(split[2]));
-                            return stockEntry;
-                        }).collect(Collectors.toList()));
+    public Collection<String> getStockSymbols() {
+        List<StockEntry> allStocks = stockEntryClientService.getStockEntries();
+        List<String> stockSymbols = allStocks.stream().map(StockEntry::getSymbol).toList();
+        return stockSymbols;
     }
+
+    public void stockExit(String symbol, LocalDate exitDate, Double price) {
+        // get the stock entry for this symbol
+        StockEntry stockEntry = stockEntryClientService.getStockEntryBySymbol(symbol);
+        stockEntry.setCurrentMarketPrice(calculateMarketPrice(stockEntry.getSymbol()));
+        stockEntry.setPurchaseBrokerage(
+                calculateBrokerage(stockEntry.getPurchasePricePerUnit(), stockEntry.getQuantity(), true));
+        stockEntry.setCurrentPrice(calculateCurrentPrice(stockEntry.getCurrentMarketPrice(), stockEntry.getQuantity()));
+        stockEntry.setGainOrLoss(calculateGainOrLoss(stockEntry.getCurrentPrice(), stockEntry.getTotalPurchasePrice()));
+        stockEntry.setPercentageChange(
+                calculatePercentageChange(stockEntry.getCurrentMarketPrice(), stockEntry.getPurchasePricePerUnit()));
+
+        // create a stock exit object
+        StockExit stockExit = new StockExit();
+        stockExit.setEntryDate(stockEntry.getEntryDate());
+        stockExit.setExitDate(exitDate);
+        stockExit.setPortfolioId(stockEntry.getPortfolioId());
+        stockExit.setPurchaseBrokerage(stockEntry.getPurchaseBrokerage());
+        stockExit.setPurchasePricePerUnit(stockEntry.getPurchasePricePerUnit());
+        stockExit.setQuantity(stockEntry.getQuantity());
+        stockExit.setSalePricePerUnit(new BigDecimal(price));
+        stockExit.setSaleBrokerage(calculateBrokerage(stockExit.getSalePricePerUnit(), stockExit.getQuantity(), false));
+        stockExit.setSymbol(symbol);
+        stockExit.setTotalPurchasePrice(stockEntry.getTotalPurchasePrice());
+        stockExit.setTotalSalePrice(calculateTotalSaleCost(stockExit.getSalePricePerUnit(), stockExit.getQuantity(),
+                stockExit.getSaleBrokerage()));
+        stockExit.setPreTaxGain(stockExit.getTotalSalePrice().subtract(stockExit.getTotalPurchasePrice()));
+        // add the stock exit object
+        stockExitClientService.saveStockExit(stockExit);
+        // delete the stock entry object
+        stockEntryClientService.deleteStockEntry(stockEntry);
+    }
+
 }

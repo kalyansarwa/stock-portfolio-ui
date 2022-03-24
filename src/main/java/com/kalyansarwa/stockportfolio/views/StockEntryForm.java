@@ -1,6 +1,6 @@
 package com.kalyansarwa.stockportfolio.views;
 
-import com.kalyansarwa.stockportfolio.model.StockItem;
+import com.kalyansarwa.stockportfolio.model.StockEntry;
 import com.kalyansarwa.stockportfolio.utils.DoubleToBigDecimalConverter;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
@@ -29,10 +29,8 @@ public class StockEntryForm extends FormLayout {
     Button deleteButton = new Button("Delete");
     Button cancelButton = new Button("Cancel");
 
-    Binder<StockItem> binder = new Binder<>(StockItem.class);
-    private StockItem stockItem;
-
-    // private StockItem stockItem;
+    Binder<StockEntry> binder = new Binder<>(StockEntry.class);
+    private StockEntry stockItem;
 
     public StockEntryForm() {
         addClassName("stock-entry-form");
@@ -48,7 +46,7 @@ public class StockEntryForm extends FormLayout {
 
     }
 
-    public void setStockItem(StockItem stockItem) {
+    public void setStockItem(StockEntry stockItem) {
         this.stockItem = stockItem;
         binder.readBean(stockItem);
     }
@@ -56,13 +54,13 @@ public class StockEntryForm extends FormLayout {
     private void bindFields() {
         binder.forField(price)
                 .withConverter(new DoubleToBigDecimalConverter())
-                .bind(StockItem::getPrice, StockItem::setPrice);
+                .bind(StockEntry::getPurchasePricePerUnit, StockEntry::setPurchasePricePerUnit);
         binder.forField(entryDate)
-                .bind(StockItem::getEntryDate, StockItem::setEntryDate);
+                .bind(StockEntry::getEntryDate, StockEntry::setEntryDate);
         binder.forField(symbol)
-                .bind(StockItem::getSymbol, StockItem::setSymbol);
+                .bind(StockEntry::getSymbol, StockEntry::setSymbol);
         binder.forField(quantity)
-                .bind(StockItem::getQuantity, StockItem::setQuantity);
+                .bind(StockEntry::getQuantity, StockEntry::setQuantity);
 
     }
 
@@ -95,26 +93,26 @@ public class StockEntryForm extends FormLayout {
 
     // Events
     public static abstract class StockEntryFormEvent extends ComponentEvent<StockEntryForm> {
-        private StockItem StockItem;
+        private StockEntry StockItem;
 
-        protected StockEntryFormEvent(StockEntryForm source, StockItem StockItem) {
+        protected StockEntryFormEvent(StockEntryForm source, StockEntry StockItem) {
             super(source, false);
             this.StockItem = StockItem;
         }
 
-        public StockItem getStockItem() {
+        public StockEntry getStockItem() {
             return StockItem;
         }
     }
 
     public static class SaveEvent extends StockEntryFormEvent {
-        SaveEvent(StockEntryForm source, StockItem StockItem) {
+        SaveEvent(StockEntryForm source, StockEntry StockItem) {
             super(source, StockItem);
         }
     }
 
     public static class DeleteEvent extends StockEntryFormEvent {
-        DeleteEvent(StockEntryForm source, StockItem StockItem) {
+        DeleteEvent(StockEntryForm source, StockEntry StockItem) {
             super(source, StockItem);
         }
 

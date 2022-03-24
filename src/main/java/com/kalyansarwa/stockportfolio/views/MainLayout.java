@@ -5,6 +5,7 @@ import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -26,7 +27,8 @@ public class MainLayout extends AppLayout {
         logo.addClassNames("text-l","m-m");
 
         Button logoutButton = new Button("Log Out", e -> service.logout());
-        HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), logo, logoutButton);
+        Label label = new Label(service.getAuthenticatedUser().getUsername());
+        HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), logo, label, logoutButton);
 
         header.setDefaultVerticalComponentAlignment(Alignment.CENTER);
         header.expand(logo);
@@ -38,12 +40,16 @@ public class MainLayout extends AppLayout {
     }
 
     private void createDrawer() {
-        RouterLink listView = new RouterLink("Stock Entries", ListView.class);
-        listView.setHighlightCondition(HighlightConditions.sameLocation());
+        RouterLink stockEntriesView = new RouterLink("Stock Entries", StockEntriesView.class);
+        stockEntriesView.setHighlightCondition(HighlightConditions.sameLocation());
+
+        RouterLink stockExitsView = new RouterLink("Stock Exits", StockExitsView.class);
+        stockExitsView.setHighlightCondition(HighlightConditions.sameLocation());
 
         addToDrawer(new VerticalLayout(
             new RouterLink("Dashboard", DashboardView.class),
-            listView
+            stockEntriesView,
+            stockExitsView
         ));
     }
     

@@ -3,14 +3,11 @@ package com.kalyansarwa.stockportfolio.security;
 import com.kalyansarwa.stockportfolio.views.LoginView;
 import com.vaadin.flow.spring.security.VaadinWebSecurityConfigurerAdapter;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 @EnableWebSecurity
 @Configuration
@@ -28,10 +25,15 @@ public class SecurityConfig extends VaadinWebSecurityConfigurerAdapter {
         super.configure(web);
     }
 
-    @Bean
     @Override
-    protected UserDetailsService userDetailsService() {
-        return new InMemoryUserDetailsManager(
-                User.withUsername("username").password("{noop}userpass").roles("USER").build());
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication().withUser("username").password("{noop}userpass").roles("USER");
     }
+
+    // @Bean
+    // @Override
+    // protected UserDetailsService userDetailsService() {
+    // return new InMemoryUserDetailsManager(
+    // User.withUsername("username").password("{noop}userpass").roles("USER").build());
+    // }
 }
